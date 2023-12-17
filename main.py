@@ -4,10 +4,12 @@ import os
 import dotenv
 import requests
 import io
+import asyncio
 import base64
 from interactions import SlashCommandChoice
 
 bot = Client(intents=Intents.DEFAULT)
+url = "http://127.0.0.1:7860"
 
 @listen()
 async def on_ready():
@@ -20,7 +22,6 @@ async def on_message_create(event):
 
 #* COMMANDS
 #* FIRST COMMAND
-url = "http://127.0.0.1:7860"
 @slash_command(name="image", description="Creates images with Stability Diffusion")
 
 
@@ -54,7 +55,7 @@ url = "http://127.0.0.1:7860"
 
 #! THIRD OPTION OF IMAGE COMMAND
 @slash_option(
-    name="negativeprompt",
+    name="negative_prompt",
     description="An optional text that provides a contrasting or opposing idea to the main prompt.",
     required=False,
     opt_type=OptionType.STRING
@@ -63,16 +64,15 @@ url = "http://127.0.0.1:7860"
 #! FOURTH OPTION OF IMAGE COMMAND
 @slash_option(
     name="steps",
-    description="",
+    description="desc step",
     required=False,
     opt_type=OptionType.INTEGER,
-    min_value=10,
-    max_value=50
+    max_value=51
 )
 #! FIFTH OPTION OF IMAGE COMMAND
 @slash_option(
     name="width",
-    description="",
+    description="desc width",
     required=False,
     opt_type=OptionType.INTEGER,
     min_value=312,
@@ -82,45 +82,48 @@ url = "http://127.0.0.1:7860"
 #! SIXTH OPTION OF IMAGE COMMAND
 @slash_option(
     name="height",
-    description="",
+    description="desc height",
     required=False,
     opt_type=OptionType.INTEGER,
     min_value=312,
     max_value=1024
 )
 
-
 #* RUNNING FUNCTION
 async def image_function(ctx: SlashContext, 
                          prompt: str, 
                          style: str = "Digital Art", 
-                         negative_prompt: str="", 
+                         negative_prompt: str="text", 
                          width: int = 512, 
                          height: int = 512,
-                         steps: int = 20
-                         
+                         steps: int = 10
                          ):
+    await ctx.defer()
     
-    
-
     payload = {
         "prompt": prompt,
-        "negative_prompt" : negative_prompt,
         "styles": [style],
-        "steps": steps,
+        "negative_prompt" : negative_prompt,
         "width" : width,
-        "height" : height
+        "height" : height,
+        "steps": steps
     }
-
+    
     response = requests.post(url=f"{url}/sdapi/v1/txt2img", json=payload)
     r = response.json()
     image_bytes = base64.b64decode(r['images'][0])
+    image = io.BytesIO(image_bytes)
     
+    await asyncio.sleep(12)
 
     # A display method to to see the image in jupyter > 
     # >>>>>  display(Image(data=img.getvalue(), format='png'))
+
     mention = f"<@{ctx.author.id}>"
-    await ctx.send(f"**Prompt: {prompt}** by {mention}  ", file=interactions.File(io.BytesIO(image_bytes), file_name="image.png"))
+    file_name = f"{prompt}.png"
+    await ctx.send(f"**Prompt: {prompt}** by {mention}  ", 
+                   file=interactions.File(image, file_name=file_name))
+    
 
 
 
