@@ -1,12 +1,11 @@
 import interactions
-from interactions import Client, Intents, listen, slash_command, SlashContext, slash_option, OptionType
+from interactions import Client, Intents, listen, slash_command, SlashContext, slash_option, OptionType, SlashCommandChoice
 import os
 import dotenv
 import requests
 import io
 import asyncio
 import base64
-from interactions import SlashCommandChoice
 
 bot = Client(intents=Intents.DEFAULT)
 url = "http://127.0.0.1:7860"
